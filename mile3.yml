@@ -1,0 +1,53 @@
+---
+- name: Install Docker and Start docker service on localhost and remote server
+  hosts: localhost,docker_server 
+  become: true
+  tasks:
+    - name: Docker Installation
+      apt:
+        name: docker.io
+        state: present
+        update_cache: yes
+
+    - name: Enable and start docker service
+      service: 
+        name: docker
+        state: started
+        enabled: true
+
+# ----------------------------------------
+- name: Build Docker Image
+  hosts: localhost # if we write docker_server then we dont have any files yet and to automate the process we use ansible localhost
+  become: true
+
+  tasks:
+    - name: Build Image
+      command: docker build -t sulav02/mile3:01 .
+
+    - name: Docker login 
+      shell: echo "{{ DOCKER_PAT }}" | docker login -u sulav02 --password-stdin
+
+    
+    - name: Push Docker Image
+      command: docker push sulav02/mile3:01
+
+
+# ----------------------------------------
+- name: 
+  hosts: docker_server
+  become: true
+  
+  tasks: 
+    - name: pull image
+      command: docker pull sulav02/mile3:01
+    
+    - name: Remove exising docker container if exists
+      command: docker rm -f c1
+
+    - name: Run docker container
+      command: docker run -dit -p 80:80 --name c1 sulav02/mile3:01
+
+    
+
+
+      
